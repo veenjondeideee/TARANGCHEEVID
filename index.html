@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My TCAS 70 Ultimate Dashboard</title>
+  <style>
+    /* --- 1. CSS ปุ่มเมนูเอฟเฟกต์ของคุณ (เวอร์ชันแก้ไขแล้ว) --- */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      min-width: 60px;
+    }
+    .menu-item {
+      width: 52px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      padding: 0 14px;
+      box-sizing: border-box;
+      transition: width .45s cubic-bezier(.22, 1, .36, 1), background .3s ease, box-shadow .3s ease;
+    }
+    .menu-item:hover {
+      width: 190px;
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 0 28px rgba(0, 229, 255, 0.22);
+    }
+    .menu-label {
+      opacity: 0;
+      max-width: 0;
+      transform: translateX(-8px);
+      white-space: nowrap;
+      transition: opacity .25s ease, max-width .45s ease, transform .35s ease;
+    }
+    .menu-item:hover .menu-label {
+      opacity: 1;
+      max-width: 130px;
+      transform: translateX(0);
+    }
+    .icon { font-size: 20px; flex-shrink: 0; }
+
+    /* --- 2. CSS จัดหน้าจอโครงสร้าง 5 ช่อง --- */
+    body {
+      margin: 0; padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0f172a; color: #f8fafc;
+      min-height: 100vh; box-sizing: border-box;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .dashboard-container { display: flex; gap: 25px; max-width: 1400px; margin: 0 auto; }
+    .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; flex-grow: 1; }
+    .card {
+      background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px; padding: 20px; backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2); display: flex; flex-direction: column;
+    }
+    .card h3 { margin-top: 0; margin-bottom: 15px; font-size: 1.1rem; color: #38bdf8; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
+    textarea {
+      width: 100%; height: 110px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px; color: white; padding: 10px; box-sizing: border-box; resize: none; font-family: inherit;
+    }
+    textarea:focus { outline: none; border-color: #00e5ff; }
+    button {
+      margin-top: 10px; background: #0284c7; color: white; border: none;
+      padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s;
+    }
+    button:hover { background: #0369a1; }
+    
+    /* ช่องพิเศษ */
+    .box-4 { grid-column: span 2; border-color: rgba(0, 229, 255, 0.2); }
+    .box-4-content {
+      background: rgba(15, 23, 42, 0.4); padding: 15px; border-radius: 8px;
+      white-space: pre-wrap; flex-grow: 1; font-size: 0.95rem; line-height: 1.6;
+    }
+    .ui-settings { display: flex; flex-direction: column; gap: 10px; }
+    .setting-item { display: flex; justify-content: space-between; align-items: center; }
+
+    /* --- 3. Responsive สำหรับเปิดในวิเจ็ต/มือถือ --- */
+    @media (max-width: 768px) {
+      .dashboard-container { flex-direction: column; }
+      .sidebar { flex-direction: row; justify-content: center; }
+      .dashboard-grid { grid-template-columns: 1fr; }
+      .box-4 { grid-column: span 1; }
+    }
+
+    /* --- 4. โหมดสว่าง --- */
+    body.light-mode { background-color: #f1f5f9; color: #1e293b; }
+    body.light-mode .card { background: rgba(255, 255, 255, 0.9); border-color: rgba(0,0,0,0.1); box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    body.light-mode textarea { background: #fff; color: #1e293b; border-color: #cbd5e1; }
+    body.light-mode .menu-item { background: rgba(0, 0, 0, 0.05); border-color: rgba(0,0,0,0.1); color: #1e293b;}
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-container">
+    <aside class="sidebar">
+      <div class="menu-item" onclick="focusBox(1)">
+        <span class="icon">📚</span><span class="menu-label">ตารางอ่านหนังสือ</span>
+      </div>
+      <div class="menu-item" onclick="focusBox(2)">
+        <span class="icon">⏰</span><span class="menu-label">ตารางชีวิตประจำวัน</span>
+      </div>
+      <div class="menu-item" onclick="focusBox(3)">
+        <span class="icon">🎓</span><span class="menu-label">ตาราง TCAS 70</span>
+      </div>
+    </aside>
+
+    <main class="dashboard-grid">
+      <div class="card" id="card-1">
+        <h3>ช่องที่ 1: ตารางอ่านหนังสือ</h3>
+        <textarea id="input-study" placeholder="พิมพ์ตารางอ่านหนังสือของคุณที่นี่..."></textarea>
+        <button onclick="saveData()">บันทึกข้อมูล</button>
+      </div>
+
+      <div class="card" id="card-2">
+        <h3>ช่องที่ 2: ตารางชีวิตประจำวัน</h3>
+        <textarea id="input-routine" placeholder="พิมพ์กิจกรรมประจำวันของคุณที่นี่..."></textarea>
+        <button onclick="saveData()">บันทึกข้อมูล</button>
+      </div>
+
+      <div class="card" id="card-3">
+        <h3>ช่องที่ 3: ตาราง TCAS 70 (+ บอตอัตโนมัติ)</h3>
+        <textarea id="input-tcas" placeholder="พิมพ์บันทึกเพิ่มเติมเกี่ยวกับ TCAS..."></textarea>
+        <button onclick="saveData()">บันทึกข้อมูล</button>
+        <div id="bot-status" style="font-size:0.85rem; margin-top:10px; color:#a3e635;">🔄 กำลังโหลดประกาศล่าสุดจากบอต...</div>
+      </div>
+
+      <div class="card box-4">
+        <h3>ช่องที่ 4: รวมทั้ง 3 ตาราง + ประกาศจากบอต</h3>
+        <div class="box-4-content" id="combined-view">กำลังประมวลผลข้อมูลรวม...</div>
+      </div>
+
+      <div class="card">
+        <h3>ช่องที่ 5: ตั้งค่าต่างๆ เกี่ยวกับ UI</h3>
+        <div class="ui-settings">
+          <div class="setting-item">
+            <span>เปลี่ยนโหมดสีพื้นหลัง:</span>
+            <button onclick="toggleTheme()" id="theme-btn">โหมดสว่าง</button>
+          </div>
+          <div class="setting-item">
+            <span>จัดการข้อมูล:</span>
+            <button onclick="clearData()" style="background: #ef4444;">ล้างข้อมูลทั้งหมด</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // [ฟังก์ชันเดิม] โหลดข้อมูลเมื่อเปิดเว็บ
+    window.onload = function() {
+      if(localStorage.getItem('study_data')) document.getElementById('input-study').value = localStorage.getItem('study_data');
+      if(localStorage.getItem('routine_data')) document.getElementById('input-routine').value = localStorage.getItem('routine_data');
+      if(localStorage.getItem('tcas_data')) document.getElementById('input-tcas').value = localStorage.getItem('tcas_data');
+      
+      if(localStorage.getItem('theme') === 'light') {
+        document.body.classList.add('light-mode');
+        document.getElementById('theme-btn').innerText = 'โหมดมืด';
+      }
+      
+      // ดึงข้อมูลจากบอต GitHub เพิ่มเข้ามา
+      fetchAutomationData();
+    }
+
+    // [ฟังก์ชันเดิม] บันทึกข้อมูล
+    function saveData() {
+      localStorage.setItem('study_data', document.getElementById('input-study').value);
+      localStorage.setItem('routine_data', document.getElementById('input-routine').value);
+      localStorage.setItem('tcas_data', document.getElementById('input-tcas').value);
+      updateCombinedView();
+      alert('บันทึกข้อมูลเรียบร้อยแล้วค่ะ! 💾');
+    }
+
+    // [ฟังก์ชันใหม่] ดึงข้อมูลที่บอตหามาให้จากไฟล์ data.json
+    let botDataText = "ไม่มีข้อมูลจากบอต";
+    function fetchAutomationData() {
+      fetch('data.json')
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('bot-status').innerText = `✅ บอตอัปเดตล่าสุดเมื่อ: ${data.last_updated}`;
+          botDataText = data.news.map(item => `• ${item.title} (${item.date})`).join('\n');
+          updateCombinedView();
+        })
+        .catch(err => {
+          document.getElementById('bot-status').innerText = `⚠️ ยังไม่มีไฟล์ข้อมูลจากบอต (รอรันครั้งแรก)`;
+          updateCombinedView();
+        });
+    }
+
+    // [ฟังก์ชันเดิม + อัปเกรด] อัปเดตช่องรวมผลลัพธ์
+    function updateCombinedView() {
+      const study = localStorage.getItem('study_data') || 'ไม่มีข้อมูล';
+      const routine = localStorage.getItem('routine_data') || 'ไม่มีข้อมูล';
+      const tcas = localStorage.getItem('tcas_data') || 'ไม่มีข้อมูล';
+
+      document.getElementById('combined-view').innerText = 
+        `📚 [ตารางอ่านหนังสือ]\n${study}\n\n` +
+        `⏰ [ตารางชีวิตประจำวัน]\n${routine}\n\n` +
+        `🎓 [บันทึก TCAS ของฉัน]\n${tcas}\n\n` +
+        `🤖 [ประกาศล่าสุดจากเว็บ Admission]\n${botDataText}`;
+    }
+
+    // [ฟังก์ชันเดิม] ล้างข้อมูล
+    function clearData() {
+      if(confirm('คุณแน่ใจใช่ไหมที่จะลบข้อมูลที่คุณบันทึกไว้ทั้งหมด?')) {
+        localStorage.clear();
+        document.getElementById('input-study').value = '';
+        document.getElementById('input-routine').value = '';
+        document.getElementById('input-tcas').value = '';
+        updateCombinedView();
+      }
+    }
+
+    // [ฟังก์ชันเดิม] สลับโหมดสี
+    function toggleTheme() {
+      const body = document.body;
+      body.classList.toggle('light-mode');
+      if(body.classList.contains('light-mode')) {
+        localStorage.setItem('theme', 'light');
+        document.getElementById('theme-btn').innerText = 'โหมดมืด';
+      } else {
+        localStorage.setItem('theme', 'dark');
+        document.getElementById('theme-btn').innerText = 'โหมดสว่าง';
+      }
+    }
+
+    // [ฟังก์ชันเดิม] กดเมนูแล้วซูมโฟกัสกล่อง
+    function focusBox(boxNum) {
+      const card = document.getElementById(`card-${boxNum}`);
+      card.style.transform = 'scale(1.02)';
+      card.style.transition = 'transform 0.3s';
+      card.querySelector('textarea').focus();
+      setTimeout(() => card.style.transform = 'scale(1)', 300);
+    }
+  </script>
+</body>
+</html>
