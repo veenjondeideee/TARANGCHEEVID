@@ -55,7 +55,7 @@
 
     /* --- 4. ฟอร์มทั่วไปและพื้นที่แสดงผล --- */
     textarea {
-      width: 100%; height: 180px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1);
+      width: 100%; height: 150px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1);
       border-radius: 12px; color: white; padding: 15px; box-sizing: border-box; resize: none; font-family: inherit; font-size: 1rem; line-height: 1.6;
     }
     textarea:focus { outline: none; border-color: #00e5ff; }
@@ -99,8 +99,7 @@
           <h3 id="calendar-month-year" style="margin:0; color:#00e5ff;">กรกฎาคม 2026</h3>
           <small style="color:#64748b;">(คลิกที่ช่องวันที่ เพื่อบันทึกโน้ตย่อลงในวันนั้นๆ ได้เลย)</small>
         </div>
-        <div class="calendar-grid" id="calendar-body">
-          </div>
+        <div class="calendar-grid" id="calendar-body"></div>
       </div>
 
       <div class="content-page" id="page-2">
@@ -110,9 +109,16 @@
       </div>
 
       <div class="content-page" id="page-3">
-        <h2>🎓 บันทึกและลิงก์สำคัญ TCAS 70</h2>
-        <textarea id="input-tcas" placeholder="วางลิงก์เว็บสมัครสอบ หรือเพจที่นี่ได้เลย เช่น https://admission.ubu.ac.th"></textarea>
-        <button onclick="saveData()">บันทึกข้อมูล TCAS</button>
+        <h2>🎓 บันทึกข้อมูลและ "กล่องส่งให้ AI สรุป"</h2>
+        
+        <div style="background: rgba(0, 229, 255, 0.05); border: 1px dashed #00e5ff; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+          <h4 style="margin: 0 0 10px 0; color: #00e5ff;">🤖 กล่องทางลัด: ก๊อปข้อความประกาศยาวๆ มาวางตรงนี้เพื่อให้ AI สรุปให้</h4>
+          <textarea id="input-ai-paste" placeholder="วางแคปชั่นเฟสบุ๊ก ข้อความจากไลน์ หรือเนื้อหาในเว็บยาวๆ ที่นี่... แล้วกดเซฟ จากนั้นไปกดปุ่ม Run ใน GitHub Actions เพื่อให้ AI แกะตารางลงปฏิทินให้ทันที!"></textarea>
+        </div>
+
+        <h2>🔗 ลิงก์และบันทึกทั่วไป</h2>
+        <textarea id="input-tcas" placeholder="วางลิงก์เว็บสมัครสอบ หรือโน้ตธรรมดาที่นี่..."></textarea>
+        <button onclick="saveData()">บันทึกข้อมูลทั้งหมด</button>
         
         <h4 style="margin-top: 25px; margin-bottom: 10px; color: #38bdf8;">🔗 ข้อมูลปัจจุบันที่คุณบันทึกไว้ (คลิกที่ลิงก์ได้จริง):</h4>
         <div class="display-box" id="tcas-link-view">ไม่มีข้อมูลลิงก์</div>
@@ -136,7 +142,6 @@
   </div>
 
   <script>
-    // ฟังก์ชันสลับหน้าจอ
     function switchPage(pageNum) {
       document.querySelectorAll('.menu-item').forEach(btn => btn.classList.remove('active'));
       document.querySelectorAll('.content-page').forEach(page => page.classList.remove('active-page'));
@@ -144,7 +149,6 @@
       document.getElementById(`page-${pageNum}`).classList.add('active-page');
     }
 
-    // ฟังก์ชันแปลง URL ข้อความ ให้เป็นลิงก์จริงที่กดได้
     function linkify(text) {
       const urlRegex = /(https?:\/\/[^\s]+)/g;
       return text.replace(urlRegex, function(url) {
@@ -152,7 +156,6 @@
       });
     }
 
-    // ระบบวาดตารางปฏิทินแบบ Interactive
     function generateCalendar() {
       const calendarBody = document.getElementById('calendar-body');
       calendarBody.innerHTML = '';
@@ -165,7 +168,7 @@
         calendarBody.appendChild(dayNameDiv);
       });
 
-      for (let i = 1; i <= 3; i++) { // เว้นช่องว่างต้นเดือน
+      for (let i = 1; i <= 3; i++) {
         const emptyCell = document.createElement('div');
         calendarBody.appendChild(emptyCell);
       }
@@ -186,7 +189,6 @@
         cell.appendChild(dayNum);
         cell.appendChild(dayNote);
         
-        // ฟังก์ชันจดบันทึกรายวันแบบแมนนวลเมื่อเราคลิกกล่องวันที่
         cell.onclick = function() {
           const currentNote = localStorage.getItem(`cal_day_${day}`) || '';
           const newNote = prompt(`✏️ บันทึกตารางสำหรับวันที่ ${day}:`, currentNote);
@@ -201,10 +203,10 @@
       }
     }
 
-    // โหลดข้อมูลเก่าทั้งหมดเมื่อเริ่มรันเว็บ
     window.onload = function() {
       if(localStorage.getItem('routine_data')) document.getElementById('input-routine').value = localStorage.getItem('routine_data');
       if(localStorage.getItem('tcas_data')) document.getElementById('input-tcas').value = localStorage.getItem('tcas_data');
+      if(localStorage.getItem('ai_paste_data')) document.getElementById('input-ai-paste').value = localStorage.getItem('ai_paste_data');
       
       if(localStorage.getItem('theme') === 'light') {
         document.body.classList.add('light-mode');
@@ -212,17 +214,17 @@
       }
 
       generateCalendar();
-      fetchAutomationData(); // รันฟังก์ชันคุยกับบอต AI
+      fetchAutomationData(); 
       updateTCASView();
     }
 
-    // เซฟข้อมูลแบบฟอร์ม
     function saveData() {
       localStorage.setItem('routine_data', document.getElementById('input-routine').value);
       localStorage.setItem('tcas_data', document.getElementById('input-tcas').value);
+      localStorage.setItem('ai_paste_data', document.getElementById('input-ai-paste').value);
       updateTCASView();
       updateCombinedView();
-      alert('บันทึกข้อมูลหน้าจอนี้เรียบร้อยแล้ว! 💾');
+      alert('บันทึกข้อมูลเรียบร้อยแล้ว! 💾');
     }
 
     function updateTCASView() {
@@ -230,7 +232,6 @@
       document.getElementById('tcas-link-view').innerHTML = linkify(tcasText);
     }
 
-    // 🌟 [ฟังก์ชันแก้ใหม่] ดึงข้อมูล JSON และสั่งเอามาปักลงหมุดปฏิทินอัตโนมัติ
     let botDataText = "ไม่มีข้อมูลประกาศจากบอต";
     function fetchAutomationData() {
       fetch('data.json')
@@ -239,14 +240,12 @@
           document.getElementById('bot-status').innerText = `✅ บอต AI อัปเดตล่าสุดเมื่อ: ${data.last_updated}`;
           botDataText = data.news.map(item => `• ${item.title} (${item.date})`).join('\n');
           
-          // ค้นหาวันที่จากข้อความ AI แล้วแอบนำเอาไปหยอดลงช่องปฏิทินนั้นๆ
           data.news.forEach(item => {
             const match = item.date.match(/\d+/); 
             if (match) {
               const dayNum = match[0];
               const dayNoteSpan = document.getElementById(`note-day-${dayNum}`);
               if (dayNoteSpan) {
-                // ใส่ข้อมูล AI พ่วงเข้าไป (เช็คก่อนว่ามีซ้ำไหมเพื่อป้องกันข้อความซ้อนซ้ำกัน)
                 if (!dayNoteSpan.innerText.includes(item.title)) {
                   dayNoteSpan.innerText += (dayNoteSpan.innerText ? ' | ' : '') + `🤖 ${item.title}`;
                 }
@@ -262,7 +261,6 @@
         });
     }
 
-    // เรียบเรียงแสดงข้อมูลหน้าสรุปรวมทุกล่อง
     function updateCombinedView() {
       const routine = localStorage.getItem('routine_data') || 'ไม่มีข้อมูล';
       const tcas = localStorage.getItem('tcas_data') || 'ไม่มีข้อมูล';
