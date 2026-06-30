@@ -2,12 +2,16 @@ name: Run AI Scraper Bot
 
 on:
   schedule:
-    - cron: '0 17 * * *' # สั่งให้บอตตื่นมาทำตอนเที่ยงคืนของทุกวันอัตโนมัติ (เวลา UTC)
-  workflow_dispatch: # ทำให้มีปุ่มกดสั่งให้บอทรันเองได้ทันทีแบบแมนนวล
+    - cron: '0 17 * * *' # รันตอนเที่ยงคืนทุกวัน
+  workflow_dispatch: # ปุ่มกดรันเองแมนนวล
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
+    # 🌟 เพิ่มโค้ด 3 บรรทัดนี้เพื่อบังคับเปิดสิทธิ์เขียนไฟล์ให้บอตแบบร้อยเปอร์เซ็นต์
+    permissions:
+      contents: write
+      
     steps:
     - name: คัดลอกโค้ด
       uses: actions/checkout@v4
@@ -23,7 +27,7 @@ jobs:
 
     - name: รันสคริปต์บอต AI
       env:
-        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }} # ดึง API Key ที่ซ่อนไว้มาใช้
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       run: python scraper.py
 
     - name: บันทึกข้อมูลที่ AI จัดแล้วกลับเข้าคลัง
@@ -33,4 +37,3 @@ jobs:
         git add data.json
         git commit -m "AI Auto-arranged Schedule" || exit 0
         git push
-      
