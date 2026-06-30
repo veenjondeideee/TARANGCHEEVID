@@ -1,0 +1,13 @@
+import json
+
+# สมมติว่าเป็นข้อมูลที่บอตไปดึงมาจากเว็บมหาวิทยาลัยได้
+data = {
+    "last_updated": "2026-06-30 12:00:00",
+    "news": [
+        {"title": "ข่าวจากบอต", "date": "วันนี้"}
+    ]
+}
+
+# สั่งให้สร้างไฟล์และเขียนข้อมูลลงไปเป็นฟอร์แมต JSON อัตโนมัติ
+with open('data.json', 'w', encoding='utf-8') as f:
+    json.dump(data, f, ensure_ascii=False, indent=4)
