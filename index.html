@@ -1,304 +1,151 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Ultimate Calendar & TCAS Dashboard</title>
-  <style>
-    /* --- 1. CSS ปุ่มเมนูเอฟเฟกต์ของคุณ --- */
-    .sidebar { display: flex; flex-direction: column; gap: 15px; min-width: 60px; }
-    .menu-item {
-      width: 52px; height: 52px; display: flex; align-items: center; gap: 0.75rem;
-      overflow: hidden; border-radius: 999px; background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1); cursor: pointer; padding: 0 14px;
-      box-sizing: border-box; transition: width .45s cubic-bezier(.22, 1, .36, 1), background .3s ease, box-shadow .3s ease;
-    }
-    .menu-item:hover, .menu-item.active {
-      width: 190px; background: rgba(255, 255, 255, 0.12);
-      box-shadow: 0 0 28px rgba(0, 229, 255, 0.22); border-color: #00e5ff;
-    }
-    .menu-label {
-      opacity: 0; max-width: 0; transform: translateX(-8px); white-space: nowrap;
-      transition: opacity .25s ease, max-width .45s ease, transform .35s ease;
-    }
-    .menu-item:hover .menu-label, .menu-item.active .menu-label { opacity: 1; max-width: 130px; transform: translateX(0); }
-    .icon { font-size: 20px; flex-shrink: 0; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ TCAS 70 Fast AI Chat & Calendar</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 25px; }
+        
+        /* โซนปฏิทินดึงจากคลังเดิม */
+        .calendar-section { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .calendar-title { font-size: 1.4rem; font-weight: bold; color: #007bff; margin-bottom: 15px; text-align: center; }
+        .news-list { display: flex; flex-direction: column; gap: 10px; }
+        .news-item { background: #e7f1ff; padding: 12px; border-left: 5px solid #007bff; border-radius: 4px; display: flex; justify-content: space-between; }
+        .news-date { font-weight: bold; color: #0056b3; }
 
-    /* --- 2. CSS จัดหน้าจอแบบแสดงทีละหน้า --- */
-    body {
-      margin: 0; padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #0f172a; color: #f8fafc; min-height: 100vh; box-sizing: border-box;
-    }
-    .dashboard-container { display: flex; gap: 25px; max-width: 1100px; margin: 40px auto; }
-    .content-area { flex-grow: 1; }
-    .content-page {
-      display: none; background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 20px; padding: 30px; backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      animation: fadeIn 0.4s ease forwards;
-    }
-    .content-page.active-page { display: flex; flex-direction: column; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .content-page h2 { margin-top: 0; margin-bottom: 20px; font-size: 1.4rem; color: #38bdf8; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; }
-
-    /* --- 3. CSS สำหรับระบบปฏิทิน (Calendar UI) --- */
-    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; }
-    .day-name { font-weight: bold; color: #64748b; padding: 5px 0; }
-    .day-cell {
-      background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 8px; min-height: 70px; padding: 5px; display: flex; flex-direction: column;
-      align-items: flex-start; justify-content: space-between; cursor: pointer; transition: background 0.2s;
-    }
-    .day-cell:hover { background: rgba(0, 229, 255, 0.1); border-color: #00e5ff; }
-    .day-num { font-size: 0.85rem; color: #94a3b8; }
-    .day-note { font-size: 0.75rem; color: #38bdf8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; text-align: left; }
-
-    /* --- 4. ฟอร์มทั่วไปและพื้นที่แสดงผล --- */
-    textarea {
-      width: 100%; height: 150px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px; color: white; padding: 15px; box-sizing: border-box; resize: none; font-family: inherit; font-size: 1rem; line-height: 1.6;
-    }
-    textarea:focus { outline: none; border-color: #00e5ff; }
-    button {
-      margin-top: 10px; background: #0284c7; color: white; border: none; padding: 10px 20px;
-      border-radius: 8px; cursor: pointer; font-weight: bold; align-self: flex-end; transition: background 0.2s;
-    }
-    button:hover { background: #0369a1; }
-    
-    .display-box {
-      background: rgba(15, 23, 42, 0.4); padding: 20px; border-radius: 12px;
-      white-space: pre-wrap; font-size: 1rem; line-height: 1.7; border: 1px solid rgba(255, 255, 255, 0.05); word-break: break-all;
-    }
-    .display-box a { color: #00e5ff; text-decoration: underline; font-weight: bold; }
-    .display-box a:hover { color: #38bdf8; }
-
-    /* โหมดสว่าง */
-    body.light-mode { background-color: #f1f5f9; color: #1e293b; }
-    body.light-mode .content-page { background: rgba(255, 255, 255, 0.9); border-color: rgba(0,0,0,0.1); }
-    body.light-mode textarea { background: #fff; color: #1e293b; border-color: #cbd5e1; }
-    body.light-mode .day-cell { background: rgba(0, 0, 0, 0.03); border-color: rgba(0,0,0,0.05); }
-    body.light-mode .day-num { color: #64748b; }
-    body.light-mode .display-box { background: #fff; border-color: rgba(0,0,0,0.1); }
-  </style>
+        /* โซนห้องแชทสดเด้งไว */
+        .chat-section { background: white; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); overflow: hidden; display: flex; flex-direction: column; }
+        .chat-header { background: #28a745; color: white; padding: 15px; font-weight: bold; font-size: 1.2rem; }
+        .key-box { padding: 10px 20px; background: #e2e3e5; display: flex; gap: 10px; align-items: center; font-size: 0.9rem; }
+        .key-box input { flex: 1; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+        .chat-box { padding: 20px; display: flex; flex-direction: column; gap: 15px; background: #fafafa; height: 350px; overflow-y: auto; }
+        .msg { padding: 12px 16px; border-radius: 15px; max-width: 80%; line-height: 1.4; word-break: break-word; }
+        .user-bubble { background: #007bff; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .bot-bubble { background: #e9ecef; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; white-space: pre-line; }
+        
+        /* ช่องพิมพ์ข้อความด้านล่าง */
+        .input-area { display: flex; border-top: 1px solid #eee; padding: 10px; background: white; gap: 10px; }
+        .input-area input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 25px; outline: none; font-size: 1rem; }
+        .input-area button { background: #28a745; color: white; border: none; padding: 0 22px; border-radius: 25px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        .input-area button:hover { background: #218838; }
+    </style>
 </head>
 <body>
 
-  <div class="dashboard-container">
-    <aside class="sidebar">
-      <div class="menu-item active" id="btn-1" onclick="switchPage(1)"><span class="icon">📅</span><span class="menu-label">ตารางปฏิทิน</span></div>
-      <div class="menu-item" id="btn-2" onclick="switchPage(2)"><span class="icon">⏰</span><span class="menu-label">ตารางประจำวัน</span></div>
-      <div class="menu-item" id="btn-3" onclick="switchPage(3)"><span class="icon">🎓</span><span class="menu-label">ตาราง TCAS 70</span></div>
-      <div class="menu-item" id="btn-4" onclick="switchPage(4)"><span class="icon">📊</span><span class="menu-label">ดูข้อมูลรวม</span></div>
-      <div class="menu-item" id="btn-5" onclick="switchPage(5)"><span class="icon">⚙️</span><span class="menu-label">ตั้งค่า UI</span></div>
-    </aside>
+<div class="container">
 
-    <main class="content-area">
-      <div class="content-page active-page" id="page-1">
-        <h2>📅 ปฏิทินบันทึกการอ่านหนังสือและการเรียน</h2>
-        <div class="calendar-header">
-          <h3 id="calendar-month-year" style="margin:0; color:#00e5ff;">กรกฎาคม 2026</h3>
-          <small style="color:#64748b;">(คลิกที่ช่องวันที่ เพื่อบันทึกโน้ตย่อลงในวันนั้นๆ ได้เลย)</small>
+    <div class="calendar-section">
+        <div class="calendar-title">📌 กำหนดการและค่ายจากระบบอัตโนมัติ</div>
+        <div class="news-list" id="calendarGrid">
+            <p style="text-align:center; color:#888;">กำลังโหลดข้อมูลกำหนดการ...</p>
         </div>
-        <div class="calendar-grid" id="calendar-body"></div>
-      </div>
+    </div>
 
-      <div class="content-page" id="page-2">
-        <h2>⏰ ตารางชีวิตประจำวัน Routine</h2>
-        <textarea id="input-routine" placeholder="พิมพ์กิจกรรมหลักๆ ในแต่ละวันของคุณที่นี่..."></textarea>
-        <button onclick="saveData()">บันทึกตารางประจำวัน</button>
-      </div>
-
-      <div class="content-page" id="page-3">
-        <h2>🎓 บันทึกข้อมูลและ "กล่องส่งให้ AI สรุป"</h2>
+    <div class="chat-section">
+        <div class="chat-header">💬 ห้องแชทสด ถาม-ตอบทันใจ (คุยตรงกับ AI)</div>
         
-        <div style="background: rgba(0, 229, 255, 0.05); border: 1px dashed #00e5ff; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
-          <h4 style="margin: 0 0 10px 0; color: #00e5ff;">🤖 กล่องทางลัด: ก๊อปข้อความประกาศยาวๆ มาวางตรงนี้เพื่อให้ AI สรุปให้</h4>
-          <textarea id="input-ai-paste" placeholder="วางแคปชั่นเฟสบุ๊ก ข้อความจากไลน์ หรือเนื้อหาในเว็บยาวๆ ที่นี่... แล้วกดเซฟ จากนั้นไปกดปุ่ม Run ใน GitHub Actions เพื่อให้ AI แกะตารางลงปฏิทินให้ทันที!"></textarea>
+        <div class="key-box">
+            <span>🔑 ใส่ Gemini API Key ของน้อตรงนี้ก่อนใช้งาน:</span>
+            <input type="password" id="apiKeyInput" placeholder="AIzaSy..." onchange="saveKey()">
         </div>
 
-        <h2>🔗 ลิงก์และบันทึกทั่วไป</h2>
-        <textarea id="input-tcas" placeholder="วางลิงก์เว็บสมัครสอบ หรือโน้ตธรรมดาที่นี่..."></textarea>
-        <button onclick="saveData()">บันทึกข้อมูลทั้งหมด</button>
-        
-        <h4 style="margin-top: 25px; margin-bottom: 10px; color: #38bdf8;">🔗 ข้อมูลปัจจุบันที่คุณบันทึกไว้ (คลิกที่ลิงก์ได้จริง):</h4>
-        <div class="display-box" id="tcas-link-view">ไม่มีข้อมูลลิงก์</div>
-        
-        <div id="bot-status" style="font-size:0.9rem; margin-top:20px; color:#a3e635;">🔄 กำลังโหลดประกาศล่าสุดจากบอต...</div>
-      </div>
-
-      <div class="content-page" id="page-4">
-        <h2>📊 หน้าจอสรุปรวมข้อมูลทุกล่อง</h2>
-        <div class="display-box" id="combined-view">กำลังประมวลผล...</div>
-      </div>
-
-      <div class="content-page" id="page-5">
-        <h2>⚙️ ตั้งค่าระบบ UI</h2>
-        <div class="ui-settings">
-          <div class="setting-item"><span>เปลี่ยนโหมดสีหน้าจอ (Dark/Light Mode)</span><button onclick="toggleTheme()" id="theme-btn">โหมดสว่าง</button></div>
-          <div class="setting-item"><span>ล้างข้อมูลที่พิมพ์ทั้งหมด</span><button onclick="clearData()" style="background: #ef4444;">ล้างข้อมูล</button></div>
+        <div class="chat-box" id="chatBox">
+            <div class="msg bot-bubble">สวัสดีครับน้อลลล! อยากรู้อะไรถามพี่บอตได้ทันทีเลยน้า พิมพ์คุยในช่องด้านล่างได้เลยครับ! 👇</div>
         </div>
-      </div>
-    </main>
-  </div>
 
-  <script>
-    function switchPage(pageNum) {
-      document.querySelectorAll('.menu-item').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.content-page').forEach(page => page.classList.remove('active-page'));
-      document.getElementById(`btn-${pageNum}`).classList.add('active');
-      document.getElementById(`page-${pageNum}`).classList.add('active-page');
-    }
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="พิมพ์คำถามตรงนี้แล้วกดส่งได้เลย..." onkeypress="if(event.key==='Enter') sendToAI()">
+            <button onclick="sendToAI()">ส่งข้อความ</button>
+        </div>
+    </div>
 
-    function linkify(text) {
-      const urlRegex = /(https?:\/\/[^\s]+)/g;
-      return text.replace(urlRegex, function(url) {
-        return '<a href="' + url + '" target="_blank">' + url + '</a>';
-      });
-    }
+</div>
 
-    function generateCalendar() {
-      const calendarBody = document.getElementById('calendar-body');
-      calendarBody.innerHTML = '';
-      const days = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-      
-      days.forEach(day => {
-        const dayNameDiv = document.createElement('div');
-        dayNameDiv.className = 'day-name';
-        dayNameDiv.innerText = day;
-        calendarBody.appendChild(dayNameDiv);
-      });
-
-      for (let i = 1; i <= 3; i++) {
-        const emptyCell = document.createElement('div');
-        calendarBody.appendChild(emptyCell);
-      }
-
-      for (let day = 1; day <= 31; day++) {
-        const cell = document.createElement('div');
-        cell.className = 'day-cell';
-        
-        const dayNum = document.createElement('span');
-        dayNum.className = 'day-num';
-        dayNum.innerText = day;
-        
-        const dayNote = document.createElement('span');
-        dayNote.className = 'day-note';
-        dayNote.id = `note-day-${day}`;
-        dayNote.innerText = localStorage.getItem(`cal_day_${day}`) || '';
-
-        cell.appendChild(dayNum);
-        cell.appendChild(dayNote);
-        
-        cell.onclick = function() {
-          const currentNote = localStorage.getItem(`cal_day_${day}`) || '';
-          const newNote = prompt(`✏️ บันทึกตารางสำหรับวันที่ ${day}:`, currentNote);
-          if (newNote !== null) {
-            localStorage.setItem(`cal_day_${day}`, newNote);
-            dayNote.innerText = newNote;
-            updateCombinedView();
-          }
-        };
-
-        calendarBody.appendChild(cell);
-      }
-    }
-
+<script>
+    const MY_GEMINI_KEY = "AQ.Ab8RN6LdHsesaiT-RLDc_iMf_qhO7wZhTiSne6wQZ34Ip3kmTA";
     window.onload = function() {
-      if(localStorage.getItem('routine_data')) document.getElementById('input-routine').value = localStorage.getItem('routine_data');
-      if(localStorage.getItem('tcas_data')) document.getElementById('input-tcas').value = localStorage.getItem('tcas_data');
-      if(localStorage.getItem('ai_paste_data')) document.getElementById('input-ai-paste').value = localStorage.getItem('ai_paste_data');
-      
-      if(localStorage.getItem('theme') === 'light') {
-        document.body.classList.add('light-mode');
-        document.getElementById('theme-btn').innerText = 'โหมดมืด';
-      }
-
-      generateCalendar();
-      fetchAutomationData(); 
-      updateTCASView();
+        if(localStorage.getItem('gemini_key')) {
+            document.getElementById('apiKeyInput').value = MY_GEMINI_KEY;
+        }
+        loadCalendarData();
+    }
+    
+    function saveKey() {
+        localStorage.setItem('gemini_key', document.getElementById('apiKeyInput').value);
     }
 
-    function saveData() {
-      localStorage.setItem('routine_data', document.getElementById('input-routine').value);
-      localStorage.setItem('tcas_data', document.getElementById('input-tcas').value);
-      localStorage.setItem('ai_paste_data', document.getElementById('input-ai-paste').value);
-      updateTCASView();
-      updateCombinedView();
-      alert('บันทึกข้อมูลเรียบร้อยแล้ว! 💾');
-    }
-
-    function updateTCASView() {
-      const tcasText = localStorage.getItem('tcas_data') || 'ยังไม่มีข้อมูลการบันทึกลิงก์';
-      document.getElementById('tcas-link-view').innerHTML = linkify(tcasText);
-    }
-
-    let botDataText = "ไม่มีข้อมูลประกาศจากบอต";
-    function fetchAutomationData() {
-      fetch('data.json')
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById('bot-status').innerText = `✅ บอต AI อัปเดตล่าสุดเมื่อ: ${data.last_updated}`;
-          botDataText = data.news.map(item => `• ${item.title} (${item.date})`).join('\n');
-          
-          data.news.forEach(item => {
-            const match = item.date.match(/\d+/); 
-            if (match) {
-              const dayNum = match[0];
-              const dayNoteSpan = document.getElementById(`note-day-${dayNum}`);
-              if (dayNoteSpan) {
-                if (!dayNoteSpan.innerText.includes(item.title)) {
-                  dayNoteSpan.innerText += (dayNoteSpan.innerText ? ' | ' : '') + `🤖 ${item.title}`;
-                }
-              }
+    // ฟังก์ชันดึงข้อมูลกำหนดการใน data.json มาโชว์แบบเดิม
+    async function loadCalendarData() {
+        try {
+            const response = await fetch('data.json?v=' + new Date().getTime());
+            const data = await response.json();
+            const calendarGrid = document.getElementById('calendarGrid');
+            if (data.news && data.news.length > 0) {
+                calendarGrid.innerHTML = '';
+                data.news.forEach(item => {
+                    calendarGrid.innerHTML += `
+                        <div class="news-item">
+                            <span>📌 ${item.title}</span>
+                            <span class="news-date">📅 วันที่: ${item.date}</span>
+                        </div>
+                    `;
+                });
+            } else {
+                calendarGrid.innerHTML = '<p style="text-align:center; color:#aaa;">⚠️ ยังไม่มีข้อมูลกำหนดการ</p>';
             }
-          });
-
-          updateCombinedView();
-        })
-        .catch(err => {
-          document.getElementById('bot-status').innerText = `⚠️ กำลังรอบอตสแครปข้อมูลครั้งแรกจาก GitHub`;
-          updateCombinedView();
-        });
+        } catch (e) {
+            document.getElementById('calendarGrid').innerHTML = '<p style="text-align:center; color:#aaa;">ไม่มีข้อมูลปฏิทินเก่าค้างอยู่</p>';
+        }
     }
 
-    function updateCombinedView() {
-      const routine = localStorage.getItem('routine_data') || 'ไม่มีข้อมูล';
-      const tcas = localStorage.getItem('tcas_data') || 'ไม่มีข้อมูล';
-      
-      let calNotes = '';
-      for(let d=1; d<=31; d++) {
-        let note = localStorage.getItem(`cal_day_${d}`);
-        if(note) calNotes += `วันที่ ${d}: ${note}\n`;
-      }
-      if(!calNotes) calNotes = 'ยังไม่ได้บันทึกตารางในปฏิทิน';
+    // ฟังก์ชันส่งข้อความคุยสดกับ Gemini AI ทันทีไม่ผ่านบอตเก่า
+    async function sendToAI() {
+        const apiKey = document.getElementById('apiKeyInput').value.strip ? document.getElementById('apiKeyInput').value.trim() : document.getElementById('apiKeyInput').value;
+        const userInput = document.getElementById('userInput').value;
+        const chatBox = document.getElementById('chatBox');
 
-      const combinedHTML = 
-        `📅 [ตารางจากหน้าปฏิทิน]\n${calNotes}\n` +
-        `⏰ [ตารางชีวิตประจำวัน]\n${routine}\n\n` +
-        `🎓 [บันทึก TCAS ของฉัน]\n${tcas}\n\n` +
-        `🤖 [ประกาศอัตโนมัติจากเซิร์ฟเวอร์มหาลัย]\n${botDataText}`;
+        if (!apiKey) {
+            alert('❌ น้อลลล อย่าลืมเอาคีย์ Gemini มาใส่ในช่องสีเทาก่อนน้า!');
+            return;
+        }
+        if (!userInput.trim()) return;
 
-      document.getElementById('combined-view').innerHTML = linkify(combinedHTML);
+        // 1. แปะคำถามของน้อลงหน้าจอฝั่งขวา
+        chatBox.innerHTML += `<div class="msg user-bubble">${userInput}</div>`;
+        document.getElementById('userInput').value = ''; // ล้างช่องพิมพ์
+        chatBox.scrollTop = chatBox.scrollHeight; // เลื่อนหน้าจอลงล่างสุด
+
+        // แปะข้อความกำลังพิมพ์รอคำตอบ
+        const loadingId = 'loading-' + Date.now();
+        chatBox.innerHTML += `<div class="msg bot-bubble" id="${loadingId}">กำลังพิมพ์ตอบคิดแป๊บน้าน้อลลล...</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // 2. ยิงตรงหาเซิร์ฟเวอร์ Google Gemini AI ทันที
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: userInput + " (ให้ตอบในฐานะรุ่นพี่แนะนำเรื่องการเรียนและ TCAS อย่างเป็นกันเองและน่ารัก แทนตัวเองว่าพี่บอต และเรียกผู้ใช้ว่าน้อนะ)" }] }]
+                })
+            });
+            
+            const result = await response.json();
+            const aiReply = result.candidates[0].content.parts[0].text;
+            
+            // 3. เอาคำตอบจริงมาแทนที่คำว่ากำลังพิมพ์
+            document.getElementById(loadingId).innerText = aiReply;
+        } catch (error) {
+            console.error(error);
+            document.getElementById(loadingId).innerText = "❌ เกิดข้อผิดพลาด! ลองเช็คดูว่า API Key ถูกต้องไหม หรืออินเทอร์เน็ตหลุดรึเปล่านะครับน้อ";
+        }
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
+</script>
 
-    function clearData() {
-      if(confirm('ต้องการลบข้อมูลพิมพ์ทั้งหมดใช่หรือไม่? (รวมข้อมูลบนปฏิทินด้วย)')) {
-        localStorage.clear();
-        location.reload();
-      }
-    }
-
-    function toggleTheme() {
-      const body = document.body;
-      body.classList.toggle('light-mode');
-      if(body.classList.contains('light-mode')) {
-        localStorage.setItem('theme', 'light');
-        document.getElementById('theme-btn').innerText = 'โหมดมืด';
-      } else {
-        localStorage.setItem('theme', 'dark');
-        document.getElementById('theme-btn').innerText = 'โหมดสว่าง';
-      }
-    }
-  </script>
 </body>
 </html>
