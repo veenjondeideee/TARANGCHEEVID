@@ -1,0 +1,36 @@
+name: Run AI Scraper Bot
+
+on:
+  schedule:
+    - cron: '0 17 * * *' # สั่งให้บอตตื่นมาทำตอนเที่ยงคืนของทุกวันอัตโนมัติ (เวลา UTC)
+  workflow_dispatch: # ทำให้มีปุ่มกดสั่งให้บอทรันเองได้ทันทีแบบแมนนวล
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+    - name: คัดลอกโค้ด
+      uses: actions/checkout@v3
+
+    - name: ตั้งค่า Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: ติดตั้งเครื่องมือดึงเว็บ
+      run: |
+        pip install requests beautifulsoup4
+
+    - name: รันสคริปต์บอต AI
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }} # ดึง API Key ที่ซ่อนไว้มาใช้
+      run: python scraper.py
+
+    - name: บันทึกข้อมูลที่ AI จัดแล้วกลับเข้าคลัง
+      run: |
+        git config --global user.name "TCAS-AI-Bot"
+        git config --global user.email "bot@github.com"
+        git add data.json
+        git commit -m "AI Auto-arranged Schedule" || exit 0
+        git push
+      
